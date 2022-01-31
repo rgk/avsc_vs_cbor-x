@@ -1,0 +1,20 @@
+{
+  "name": "avsc_vs_cbor-x",
+  "version": "1.0.0",
+  "description": "bench",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rgk/avsc_vs_cbor-x"
+  },
+  "author": "rgk",
+  "license": "MIT",
+  "dependencies": {
+    "@avro/types": "^1.0.23",
+    "cbor-x": "^1.0.0"
+  }
+}
