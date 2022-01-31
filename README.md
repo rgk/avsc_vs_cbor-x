@@ -17,4 +17,4 @@ cbor-x2: 16.322ms
 
 cbor-x-encoder2: 4.137ms
 
-* Warning, this is not a good benchmark at all, this is just a test.
+* Warning, this is not a good benchmark at all, this is just a test, with a very small data set.
