@@ -1,175 +1,133 @@
 import Avro from '@avro/types';
-import { decode, encode, Encoder, Decoder, isNativeAccelerationEnabled } from 'cbor-x';
-import { Buffer } from 'buffer';
+import { encode, decode, Encoder, Decoder, isNativeAccelerationEnabled } from 'cbor-x';
 
-(async () => {
+if (!isNativeAccelerationEnabled)
+  console.warn('cbor-x native acceleration not enabled, verify that install finished properly');
 
-  //////////// setup ////////////
+// Config //
+const TIMES_TO_RUN = 100000;
 
-  const TIMES_TO_RUN = 1000000;
-
-  const data = { key: 1, value: "benchmark", value2: 12 };
-
+function testLoops(label, data, schema, encoder, decoder) {
   const dataStr = JSON.stringify(data);
 
-  if (!isNativeAccelerationEnabled)
-    console.warn('cbor-x native acceleration not enabled, verify that install finished properly')
+  // avsc
 
-  let encoder = new Encoder({
-    structures: [["key", "value", "value2"]]
-  });
-  let decoder = new Decoder({
-    structures: [["key", "value", "value2"]]
-  });
+  let serialized = schema.toBuffer(data);
+  let deserialized = schema.fromBuffer(serialized);
 
-  const schemaSuperSimple = Avro.Type.forSchema({
-    name: 'data',
-    type: 'record',
-    fields: [
-      { name: 'key', type: 'int' },
-      { name: 'value', type: 'string' },
-      { name: 'value2', type: 'int' },
-    ]
-  });
+  if (dataStr !== JSON.stringify(deserialized))
+    console.log('****** Serialization error with avsc schema');
 
-  const schemaSimple = Avro.Type.forSchema({
-    name: 'data',
-    type: 'record',
-    fields: [
-      { name: 'key', type: ['string', 'int'] },
-      { name: 'value', type: ['string', 'int'] },
-      { name: 'value2', type: ['string', 'int'] },
-    ]
-  });
-
-  let serialized = Buffer.alloc(1), deserialized = Buffer.alloc(1);
-
-  //////////// avsc-simple ////////////
-
-  serialized = schemaSimple.toBuffer(data);
-  deserialized = schemaSimple.fromBuffer(serialized);
-
-  if (dataStr !== JSON.stringify(deserialized)) console.log('****** Serialization error avsc-simple');
-
-  console.time('avsc-simple');
+  console.time(label + ' / avsc schema');
 
   for (let step = 0; step < TIMES_TO_RUN; step++) {
-    serialized = schemaSimple.toBuffer(data);
-    deserialized = schemaSimple.fromBuffer(serialized);
+    serialized = schema.toBuffer(data);
+    deserialized = schema.fromBuffer(serialized);
   }
 
-  console.timeEnd('avsc-simple');
+  console.timeEnd(label + ' / avsc schema');
 
-  //////////// avsc-super-simple ////////////
-
-  serialized = schemaSuperSimple.toBuffer(data);
-  deserialized = schemaSuperSimple.fromBuffer(serialized);
-
-  if (dataStr !== JSON.stringify(deserialized)) console.log('****** Serialization error avsc-super-simple');
-
-  console.time('avsc-super-simple');
-
-  for (let step = 0; step < TIMES_TO_RUN; step++) {
-    serialized = schemaSuperSimple.toBuffer(data);
-    deserialized = schemaSuperSimple.fromBuffer(serialized);
-  }
-
-  console.timeEnd('avsc-super-simple');
-
-  //////////// avsc-simple2 ////////////
-
-  serialized = schemaSimple.toBuffer(data);
-  deserialized = schemaSimple.fromBuffer(serialized);
-
-  if (dataStr !== JSON.stringify(deserialized)) console.log('****** Serialization error avsc-simple2');
-
-  console.time('avsc-simple2');
-
-  for (let step = 0; step < TIMES_TO_RUN; step++) {
-    serialized = schemaSimple.toBuffer(data);
-    deserialized = schemaSimple.fromBuffer(serialized);
-  }
-
-  console.timeEnd('avsc-simple2');
-
-  //////////// avsc-super-simple2 ////////////
-
-  serialized = schemaSuperSimple.toBuffer(data);
-  deserialized = schemaSuperSimple.fromBuffer(serialized);
-
-  if (dataStr !== JSON.stringify(deserialized)) console.log('****** Serialization error avsc-super-simple2');
-
-  console.time('avsc-super-simple2');
-
-  for (let step = 0; step < TIMES_TO_RUN; step++) {
-    serialized = schemaSuperSimple.toBuffer(data);
-    deserialized = schemaSuperSimple.fromBuffer(serialized);
-  }
-
-  console.timeEnd('avsc-super-simple2');
-
-  //////////// cbor-x ////////////
+  // cbor-x encode/decode
 
   serialized = encode(data);
   deserialized = decode(serialized);
 
-  if (dataStr !== JSON.stringify(deserialized)) console.log('****** Serialization error cbor-x');
+  if (dataStr !== JSON.stringify(deserialized))
+    console.log('****** Serialization error with cbor-x encode/decode');
 
-  console.time('cbor-x');
+  console.time(label + ' / cbor-x encode/decode');
 
   for (let step = 0; step < TIMES_TO_RUN; step++) {
     serialized = encode(data);
     deserialized = decode(serialized);
   }
 
-  console.timeEnd('cbor-x');
+  console.timeEnd(label + ' / cbor-x encode/decode');
 
-  //////////// cbor-x-encoder ////////////
+  // cbor-x encoder/decoder
 
   serialized = encoder.encode(data);
   deserialized = decoder.decode(serialized);
 
-  if (dataStr !== JSON.stringify(deserialized)) console.log('****** Serialization error cbor-x-encoder');
+  if (dataStr !== JSON.stringify(deserialized))
+    console.log('****** Serialization error with cbor-x encoder/decoder');
 
-  console.time('cbor-x-encoder');
+  console.time(label + ' / cbor-x encoder/decoder');
 
   for (let step = 0; step < TIMES_TO_RUN; step++) {
     serialized = encoder.encode(data);
     deserialized = decoder.decode(serialized);
   }
 
-  console.timeEnd('cbor-x-encoder');
+  console.timeEnd(label + ' / cbor-x encoder/decoder');
+}
 
-  //////////// cbor-x2 ////////////
+let encoderSimple = new Encoder({
+  structures: [["key", "value", "value2"]]
+});
+let decoderSimple = new Decoder({
+  structures: [["key", "value", "value2"]]
+});
 
-  serialized = encode(data);
-  deserialized = decode(serialized);
+let encoder = new Encoder({
+  structures: [
+    ["key", "name", "bool", "littleInt", "bigInt", "decimal", "bigDecimal", "negativeInt", "nullValue", "stringer"]
+  ]
+});
+let decoder = new Decoder({
+  structures: [
+    ["key", "name", "bool", "littleInt", "bigInt", "decimal", "bigDecimal", "negativeInt", "nullValue", "stringer"]
+  ]
+});
 
-  if (dataStr !== JSON.stringify(deserialized)) console.log('****** Serialization error cbor-x2');
+const schemaSimple = Avro.Type.forSchema({
+  name: 'data',
+  type: 'record',
+  fields: [
+    { name: 'key', type: 'int' },
+    { name: 'value', type: 'string' },
+    { name: 'value2', type: 'int' },
+  ]
+});
 
-  console.time('cbor-x2');
+const schema = Avro.Type.forSchema({
+  name: 'data',
+  type: 'record',
+  fields: [
+    { name: 'key', type: 'string' },
+    { name: 'name', type: 'string' },
+    { name: 'bool', type: 'boolean' },
+    { name: 'littleInt', type: 'int' },
+    { name: 'bigInt', type: 'long' },
+    { name: 'decimal', type: 'double' },
+    { name: 'bigDecimal', type: 'double' },
+    { name: 'negativeInt', type: 'int' },
+    { name: 'nullValue', type: 'null' },
+    { name: 'stringer', type: 'string' }
+  ]
+});
 
-  for (let step = 0; step < TIMES_TO_RUN; step++) {
-    serialized = encode(data);
-    deserialized = decode(serialized);
-  }
+const dataSimple = {
+  key: 1,
+  value: "benchmark",
+  value2: 12
+};
 
-  console.timeEnd('cbor-x2');
+const data = {
+  "key": "test",
+  "name": "Hello, World!",
+  "bool": true,
+  "littleInt": 3,
+  "bigInt": 32254435,
+  "decimal":1.332232,
+  "bigDecimal": 3.5522E35,
+  "negativeInt": -54,
+  "nullValue": null,
+  "stringer": "another string"
+};
 
-  //////////// cbor-x-encoder2 ////////////
+testLoops('round1-simple', dataSimple, schemaSimple, encoderSimple, decoderSimple);
+testLoops('round2-simple', dataSimple, schemaSimple, encoderSimple, decoderSimple);
 
-  serialized = encoder.encode(data);
-  deserialized = decoder.decode(serialized);
-
-  if (dataStr !== JSON.stringify(deserialized)) console.log('****** Serialization error cbor-x-encoder2');
-
-  console.time('cbor-x-encoder2');
-
-  for (let step = 0; step < TIMES_TO_RUN; step++) {
-    serialized = encoder.encode(data);
-    deserialized = decoder.decode(serialized);
-  }
-
-  console.timeEnd('cbor-x-encoder2');
-
-})();
+testLoops('round1', data, schema, encoder, decoder);
+testLoops('round2', data, schema, encoder, decoder);
