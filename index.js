@@ -1,5 +1,6 @@
 import Avro from '@avro/types';
 import { encode, decode, Encoder, Decoder, isNativeAccelerationEnabled } from 'cbor-x';
+import { Buffer } from 'buffer';
 
 if (!isNativeAccelerationEnabled)
   console.warn('cbor-x native acceleration not enabled, verify that install finished properly');
@@ -7,7 +8,7 @@ if (!isNativeAccelerationEnabled)
 // Config //
 const TIMES_TO_RUN = 100000;
 
-function testLoops(label, data, schema, encoder, decoder) {
+function testLoops(label, data, schema, schemaInfer, encoder, decoder) {
   const dataStr = JSON.stringify(data);
 
   // avsc
@@ -26,6 +27,23 @@ function testLoops(label, data, schema, encoder, decoder) {
   }
 
   console.timeEnd(label + ' / avsc schema');
+
+  // avsc infer
+
+  serialized = schemaInfer.toBuffer(data);
+  deserialized = schemaInfer.fromBuffer(serialized);
+
+  if (dataStr !== JSON.stringify(deserialized))
+    console.log('****** Serialization error with avsc infer');
+
+  console.time(label + ' / avsc infer');
+
+  for (let step = 0; step < TIMES_TO_RUN; step++) {
+    serialized = schemaInfer.toBuffer(data);
+    deserialized = schemaInfer.fromBuffer(serialized);
+  }
+
+  console.timeEnd(label + ' / avsc infer');
 
   // cbor-x encode/decode
 
@@ -126,8 +144,11 @@ const data = {
   "stringer": "another string"
 };
 
-testLoops('round1-simple', dataSimple, schemaSimple, encoderSimple, decoderSimple);
-testLoops('round2-simple', dataSimple, schemaSimple, encoderSimple, decoderSimple);
+const avscTypeSimple = Avro.Type.forValue(dataSimple);
+const avscType = Avro.Type.forValue(data);
 
-testLoops('round1', data, schema, encoder, decoder);
-testLoops('round2', data, schema, encoder, decoder);
+testLoops('round1-simple', dataSimple, schemaSimple, avscTypeSimple, encoderSimple, decoderSimple);
+testLoops('round2-simple', dataSimple, schemaSimple, avscTypeSimple, encoderSimple, decoderSimple);
+
+testLoops('round1', data, schema, avscType, encoder, decoder);
+testLoops('round2', data, schema, avscType, encoder, decoder);
