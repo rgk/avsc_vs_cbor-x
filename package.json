@@ -1,7 +1,7 @@
 {
   "name": "avsc_vs_cbor-x",
   "version": "1.0.0",
-  "description": "bench",
+  "description": "Benchmark for avsc vs cbor-x based on rudimentary data.",
   "main": "index.js",
   "type": "module",
   "scripts": {
