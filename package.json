@@ -15,7 +15,7 @@
   "author": "rgk",
   "license": "MIT",
   "dependencies": {
-    "@avro/types": "^1.0.23",
-    "cbor-x": "^1.0.0"
+    "@avro/types": "^1.0.25",
+    "cbor-x": "^1.1.0"
   }
 }
