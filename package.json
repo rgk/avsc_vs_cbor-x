@@ -16,6 +16,6 @@
   "license": "MIT",
   "dependencies": {
     "@avro/types": "^1.0.25",
-    "cbor-x": "^1.1.0"
+    "cbor-x": "^1.2.0"
   }
 }
