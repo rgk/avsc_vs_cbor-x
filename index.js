@@ -9,6 +9,15 @@ if (!isNativeAccelerationEnabled)
 const TIMES_TO_RUN = 100000;
 
 function testLoops(label, data, schema, schemaInfer, encoder, decoder) {
+  console.time(label + ' / json base');
+
+  for (let step = 0; step < TIMES_TO_RUN; step++) {
+    serialized = JSON.stringify(data);
+    deserialized = JSON.parse(data);
+  }
+
+  console.timeEnd(label + ' / json base');
+
   const dataStr = JSON.stringify(data);
 
   // avsc
