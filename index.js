@@ -11,6 +11,9 @@ const TIMES_TO_RUN = 100000;
 function testLoops(label, data, schema, schemaInfer, encoder, decoder) {
   console.time(label + ' / json base');
 
+  let serialized;
+  let deserialized;
+
   for (let step = 0; step < TIMES_TO_RUN; step++) {
     serialized = JSON.stringify(data);
     deserialized = JSON.parse(data);
@@ -22,8 +25,8 @@ function testLoops(label, data, schema, schemaInfer, encoder, decoder) {
 
   // avsc
 
-  let serialized = schema.toBuffer(data);
-  let deserialized = schema.fromBuffer(serialized);
+  serialized = schema.toBuffer(data);
+  deserialized = schema.fromBuffer(serialized);
 
   if (dataStr !== JSON.stringify(deserialized))
     console.log('****** Serialization error with avsc schema');
