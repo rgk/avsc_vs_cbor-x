@@ -16,7 +16,7 @@ function testLoops(label, data, schema, schemaInfer, encoder, decoder) {
 
   for (let step = 0; step < TIMES_TO_RUN; step++) {
     serialized = JSON.stringify(data);
-    deserialized = JSON.parse(data);
+    deserialized = JSON.parse(serialized);
   }
 
   console.timeEnd(label + ' / json base');
